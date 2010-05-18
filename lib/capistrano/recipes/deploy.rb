@@ -314,6 +314,16 @@ namespace :deploy do
   end
 
   namespace :rollback do
+    before 'deploy:rollback:revision', 'deploy:rollback:db'
+    desc "Rolls back database to migration level of the previously deployed release"
+    task :db, :roles => :db, :only => { :primary => true } do
+      if previous_release
+        run "cd #{current_path}; rake RAILS_ENV=#{rails_env} db:migrate VERSION=`cd #{File.join(previous_release, 'db', 'migrate')} && ls -1 [0-9]*_*.rb | sort | tail -1 | sed -e s/_.*$//`"
+      else
+        abort "could not rollback the db because there is no prior release"
+      end
+    end
+
     desc <<-DESC
       [internal] Points the current symlink at the previous revision.
       This is called by the rollback sequence, and should rarely (if
