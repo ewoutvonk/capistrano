@@ -1,3 +1,5 @@
+require 'capistrano/multistage'
+
 module Capistrano
   class ExtensionProxy #:nodoc:
     def initialize(config, mod)
