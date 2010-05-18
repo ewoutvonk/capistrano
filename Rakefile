@@ -18,11 +18,10 @@ begin
     gem.add_dependency  "highline"
     gem.add_development_dependency "mocha", ">= 0"
   end
+  Jeweler::GemcutterTasks.new
 rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
 end
-
-Jeweler::GemcutterTasks.new
 
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
