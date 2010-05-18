@@ -408,10 +408,11 @@ namespace :deploy do
     because migrations are not guaranteed to be reversible.
   DESC
   task :migrations do
-    set :migrate_target, :latest
+    # when using bundler, symlink has to run before migrate (unless you want to fully rebundle each deployment)
+    set :migrate_target, :current
     update_code
-    migrate
     symlink
+    migrate
     restart
   end
 
