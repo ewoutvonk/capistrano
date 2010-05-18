@@ -23,6 +23,7 @@ _cset(:repository)  { abort "Please specify the repository that houses your appl
 
 _cset :scm, :subversion
 _cset :deploy_via, :checkout
+_cset :running_cold_deploy, false
 
 _cset(:deploy_to) { "/u/apps/#{application}" }
 _cset(:revision)  { source.head }
@@ -465,17 +466,26 @@ namespace :deploy do
     end
   end
 
-  desc <<-DESC
-    Deploys and starts a `cold' application. This is useful if you have not \
-    deployed your application before, or if your application is (for some \
-    other reason) not currently running. It will deploy the code, run any \
-    pending migrations, and then instead of invoking `deploy:restart', it will \
-    invoke `deploy:start' to fire up the application servers.
-  DESC
-  task :cold do
-    update
-    migrate
-    start
+  namespace :cold do
+
+    desc <<-DESC
+      Deploys a `cold' application. It will deploy the code.
+    DESC
+    task :default do
+      set :running_cold_deploy, true
+      update
+    end
+
+    desc <<-DESC
+      Deploys a `cold' application. It will deploy the code and run any \
+      pending migrations.
+    DESC
+    task :migrations do
+      set :running_cold_deploy, true
+      update
+      migrate
+    end
+    
   end
 
   desc <<-DESC
