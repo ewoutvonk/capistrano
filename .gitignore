@@ -7,3 +7,5 @@ pkg
 *.sh
 .DS_Store
 capistrano.gemspec
+le1t0-capistrano.gemspec
+pkg/*
