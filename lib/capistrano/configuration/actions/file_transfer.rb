@@ -35,6 +35,11 @@ module Capistrano
         end
 
         def transfer(direction, from, to, options={}, &block)
+          if dry_run
+            logger.debug "#{direction}load #{from.is_a?(StringIO) ? "string" : from} to #{to.is_a?(StringIO) ? "string" : to} via #{options.fetch(:via, :sftp)}"
+            return
+          end
+          
           execute_on_servers(options) do |servers|
             targets = servers.map { |s| sessions[s] }
             Transfer.process(direction, from, to, targets, options.merge(:logger => logger), &block)
