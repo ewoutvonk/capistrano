@@ -524,40 +524,16 @@ namespace :deploy do
       servers must be configured to detect the presence of this file, and if \
       it is present, always display it instead of performing the request.
 
-      By default, the maintenance page will just say the site is down for \
-      "maintenance", and will be back "shortly", but you can customize the \
-      page by specifying the REASON and UNTIL environment variables:
-
-        $ cap deploy:web:disable \\
-              REASON="hardware upgrade" \\
-              UNTIL="12pm Central Time"
-
-      Further customization will require that you write your own task.
+      This just copies public/maintenance.html to public/system/maintenance.html.
+      Use a before hook to generate/initialize the public/maintenance.html if you
+      want it to contain dynamic information.
     DESC
     task :disable, :roles => :web, :except => { :no_release => true } do
       require 'erb'
-      on_rollback { run "rm #{shared_path}/system/maintenance.html" }
+      on_rollback { run "rm -f #{shared_path}/system/maintenance.html" }
 
-      warn <<-EOHTACCESS
-      
-        # Please add something like this to your site's htaccess to redirect users to the maintenance page.
-        # More Info: http://www.shiftcommathree.com/articles/make-your-rails-maintenance-page-respond-with-a-503
-        
-        ErrorDocument 503 /system/maintenance.html
-        RewriteEngine On
-        RewriteCond %{REQUEST_URI} !\.(css|gif|jpg|png)$
-        RewriteCond %{DOCUMENT_ROOT}/system/maintenance.html -f
-        RewriteCond %{SCRIPT_FILENAME} !maintenance.html
-        RewriteRule ^.*$  -  [redirect=503,last]
-      EOHTACCESS
-
-      reason = ENV['REASON']
-      deadline = ENV['UNTIL']
-
-      template = File.read(File.join(File.dirname(__FILE__), "templates", "maintenance.rhtml"))
-      result = ERB.new(template).result(binding)
-
-      put result, "#{shared_path}/system/maintenance.html", :mode => 0644
+      run "cp #{current_path}/public/maintenance.html #{current_path}/public/system/maintenance.html"
+      run "chmod 644 #{current_path}/public/system/maintenance.html"
     end
 
     desc <<-DESC
