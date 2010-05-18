@@ -1,3 +1,18 @@
+== 2.5.18.002 / May 18, 2010
+
+Various fixes and additions:
+
+  * Add database rollback
+  * Fix deploy:migrations such that it works with bundler (having bundler_gems in shared dir)
+  * Modified control tasks for passenger
+  * Modify deploy:cold (only code) and added deploy:cold:migrations + add variable stating whether or not cold deploy is run
+  * Modify upload task so it reloads the app + add revert task and upload/revert tasks for uploading i18n files
+  * Modified deploy:web:disable such that it only copies public/maintenance.html to public/system/maintenance.html
+
+== 2.5.18.001 / April 19, 2010
+
+Fixed transfer methods (get, put, etc) not honoring dry-run.
+
 == 2.5.18 / March 14, 2010
 
 Small fix for rolling back if a shell scripts exits non-zero; enabled a rollback if git (or other) externals fail during the deploy.
