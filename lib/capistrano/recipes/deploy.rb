@@ -68,6 +68,9 @@ _cset(:run_method)        { fetch(:use_sudo, true) ? :sudo : :run }
 # standalone case, or during deployment.
 _cset(:latest_release) { exists?(:deploy_timestamped) ? release_path : current_release }
 
+# set i18n languages used by your rails app, comma separated
+_cset :rails_languages, "en"
+
 # =========================================================================
 # These are helper methods that will be available to your recipes.
 # =========================================================================
@@ -291,6 +294,7 @@ namespace :deploy do
     abort "Please specify at least one file or directory to update (via the FILES environment variable)" if files.empty?
 
     files.each { |file| top.upload(file, File.join(current_path, file)) }
+    top.deploy.restart unless (ENV['NO_RESTART'] || "").downcase == 'true'
   end
 
   desc <<-DESC
@@ -584,6 +588,37 @@ namespace :deploy do
     DESC
     task :enable, :roles => :web, :except => { :no_release => true } do
       run "rm #{shared_path}/system/maintenance.html"
+    end
+  end
+  
+  namespace :hack do
+    desc "upload ymls to server from local checked out branch, CAUTION: can break the server!"
+    task :upload_ymls do
+      (ENV["LANGUAGES"] || rails_languages).split(',').each do |lang|
+        if File.exists?("config/locales/#{lang}.yml")
+          buffer = File.read("config/locales/#{lang}.yml")
+          put buffer, "#{current_path}/config/locales/#{lang}.yml", :mode => 0644
+        end
+      end
+      top.deploy.restart unless (ENV['NO_RESTART'] || "").downcase == 'true'
+    end
+
+    desc "revert changed ymls on server, not to be used on test!"
+    task :revert_ymls do
+      (ENV["LANGUAGES"] || rails_languages).split(',').each do |lang|
+        run "cd #{current_path}/config/locales/ ; git checkout #{lang}.yml"
+      end
+      top.deploy.restart unless (ENV['NO_RESTART'] || "").downcase == 'true'
+    end
+
+    desc "revert uploaded/changed files on server"
+    task :revert do
+      abort "You have to specify the files to revert in env var FILES (comma separated)" unless ENV['FILES']
+      
+      ENV['FILES'].split(',').each do |file|
+        run "cd #{current_path} ; git checkout #{file}"
+      end
+      top.deploy.restart unless (ENV['NO_RESTART'] || "").downcase == 'true'
     end
   end
 end
