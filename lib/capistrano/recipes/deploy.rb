@@ -1,6 +1,7 @@
 require 'yaml'
 require 'capistrano/recipes/deploy/scm'
 require 'capistrano/recipes/deploy/strategy'
+require 'capistrano/multistage'
 
 def _cset(name, *args, &block)
   unless exists?(name)
