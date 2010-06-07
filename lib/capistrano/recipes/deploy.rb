@@ -24,6 +24,7 @@ _cset(:repository)  { abort "Please specify the repository that houses your appl
 _cset :scm, :subversion
 _cset :deploy_via, :checkout
 _cset :running_cold_deploy, false
+_cset :running_migrations, false
 
 _cset(:deploy_to) { "/u/apps/#{application}" }
 _cset(:revision)  { source.head }
@@ -400,6 +401,7 @@ namespace :deploy do
   DESC
   task :migrations do
     set :migrate_target, :latest
+    set :running_migrations, true
     update_code
     migrate
     symlink
@@ -482,6 +484,7 @@ namespace :deploy do
     DESC
     task :migrations do
       set :running_cold_deploy, true
+      set :running_migrations, true
       update
       migrate
     end
