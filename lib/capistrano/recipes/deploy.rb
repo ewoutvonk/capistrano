@@ -25,6 +25,7 @@ _cset(:repository)  { abort "Please specify the repository that houses your appl
 _cset :scm, :subversion
 _cset :deploy_via, :checkout
 _cset :running_cold_deploy, false
+_cset :running_migrations, false
 
 _cset(:deploy_to) { "/u/apps/#{application}" }
 _cset(:revision)  { source.head }
@@ -401,6 +402,7 @@ namespace :deploy do
   task :migrations do
     # when using bundler, symlink has to run before migrate (unless you want to fully rebundle each deployment)
     set :migrate_target, :current
+    set :running_migrations, true
     update_code
     symlink
     migrate
@@ -483,6 +485,7 @@ namespace :deploy do
     DESC
     task :migrations do
       set :running_cold_deploy, true
+      set :running_migrations, true
       update
       migrate
     end
