@@ -1,3 +1,7 @@
+== 2.5.18.005 / Jun 7, 2010
+
+Added :migrations boolean variable, so we can easily see we are running migrations or not.
+
 == 2.5.18.004 / May 19, 2010
 
 Fixed loading of multistage support.
