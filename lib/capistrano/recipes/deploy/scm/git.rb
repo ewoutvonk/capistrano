@@ -171,7 +171,7 @@ module Capistrano
           remote  = origin
 
           execute = []
-          execute << "cd #{destination}"
+          execute << "cd #{destination} && #{git} gc"
 
           # Use git-config to setup a remote tracking branches. Could use
           # git-remote but it complains when a remote of the same name already
