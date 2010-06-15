@@ -1,3 +1,7 @@
+== 2.5.18.006 / Jun 15, 2010
+
+Add git gc call to scm sync for git
+
 == 2.5.18.005 / Jun 7, 2010
 
 Added :migrations boolean variable, so we can easily see we are running migrations or not.
