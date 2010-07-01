@@ -1,3 +1,7 @@
+== 2.5.18.007 / Jun 15, 2010
+
+Moved setting of running_migrations and running_cold_deploy to separate tasks so other task can hook in between
+
 == 2.5.18.006 / Jun 15, 2010
 
 Add git gc call to scm sync for git
