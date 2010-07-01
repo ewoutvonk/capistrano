@@ -154,6 +154,10 @@ end
 # of them with `cap -T'.
 # =========================================================================
 
+before 'deploy:migrations', 'deploy:migrations_init'
+before 'deploy:cold', 'deploy:cold_init'
+before 'deploy:cold:migrations', 'deploy:cold_migrations_init'
+
 namespace :deploy do
   desc <<-DESC
     Deploys your project. This calls both `update' and `restart'. Note that \
@@ -402,7 +406,6 @@ namespace :deploy do
   task :migrations do
     # when using bundler, symlink has to run before migrate (unless you want to fully rebundle each deployment)
     set :migrate_target, :current
-    set :running_migrations, true
     update_code
     symlink
     migrate
@@ -475,7 +478,6 @@ namespace :deploy do
       Deploys a `cold' application. It will deploy the code.
     DESC
     task :default do
-      set :running_cold_deploy, true
       update
     end
 
@@ -484,14 +486,25 @@ namespace :deploy do
       pending migrations.
     DESC
     task :migrations do
-      set :running_cold_deploy, true
-      set :running_migrations, true
       update
       migrate
     end
     
   end
+  
+  task :migrations_init do
+    set :running_migrations, true
+  end
 
+  task :cold_init do
+    set :running_cold_deploy, true
+  end
+
+  task :cold_migrations_init do
+    set :running_migrations, true
+    set :running_cold_deploy, true
+  end
+  
   desc "This does nothing, but is here for backwards compatibility."
   task :start, :roles => :app do
   end
