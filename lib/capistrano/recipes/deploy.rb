@@ -150,6 +150,10 @@ end
 # of them with `cap -T'.
 # =========================================================================
 
+before 'deploy:migrations', 'deploy:migrations_init'
+before 'deploy:cold', 'deploy:cold_init'
+before 'deploy:cold:migrations', 'deploy:cold_migrations_init'
+
 namespace :deploy do
   desc <<-DESC
     Deploys your project. This calls both `update' and `restart'. Note that \
@@ -400,8 +404,8 @@ namespace :deploy do
     because migrations are not guaranteed to be reversible.
   DESC
   task :migrations do
-    set :migrate_target, :latest
-    set :running_migrations, true
+    # when using bundler, symlink has to run before migrate (unless you want to fully rebundle each deployment)
+    set :migrate_target, :current
     update_code
     migrate
     symlink
@@ -474,7 +478,6 @@ namespace :deploy do
       Deploys a `cold' application. It will deploy the code.
     DESC
     task :default do
-      set :running_cold_deploy, true
       update
     end
 
@@ -483,26 +486,26 @@ namespace :deploy do
       pending migrations.
     DESC
     task :migrations do
-      set :running_cold_deploy, true
-      set :running_migrations, true
       update
       migrate
     end
     
   end
+  
+  task :migrations_init do
+    set :running_migrations, true
+  end
 
-  desc <<-DESC
-    Start the application servers. This will attempt to invoke a script \
-    in your application called `script/spin', which must know how to start \
-    your application listeners. For Rails applications, you might just have \
-    that script invoke `script/process/spawner' with the appropriate \
-    arguments.
+  task :cold_init do
+    set :running_cold_deploy, true
+  end
 
-    By default, the script will be executed via sudo as the `app' user. If \
-    you wish to run it as a different user, set the :runner variable to \
-    that user. If you are in an environment where you can't use sudo, set \
-    the :use_sudo variable to false.
-  DESC
+  task :cold_migrations_init do
+    set :running_migrations, true
+    set :running_cold_deploy, true
+  end
+  
+  desc "This does nothing, but is here for backwards compatibility."
   task :start, :roles => :app do
     warn "[DEPRECATED] `deploy:start` is going to be removed after 2.5.9 - see http://is.gd/2BPeA"
     run "cd #{current_path} && #{try_runner} nohup script/spin"
