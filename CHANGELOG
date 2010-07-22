@@ -1,3 +1,7 @@
+== 2.5.18.010 / Jul 22, 2010
+
+Small fix, so TeeIO works for capistrano as well
+
 == 2.5.18.009 / Jul 22, 2010
 
 Added TeeIO class which can catch all output to $stderr/$stdout/etc, so the output can be emailed/stored
