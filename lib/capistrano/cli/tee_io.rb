@@ -63,6 +63,10 @@ class TeeIO
     end
   end
 
+  def puts(*args)
+    call_on_io(:puts, *args)
+  end
+
   def write(str)
     call_on_io(:write, str)
   end
