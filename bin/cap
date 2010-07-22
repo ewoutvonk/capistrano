@@ -1,4 +1,12 @@
 #!/usr/bin/env ruby
 
+require 'capistrano/cli/tee_io'
 require 'capistrano/cli'
+
+Signal.trap("EXIT") do
+  TeeIO.output_all # make sure we request the output, so file pointers get closed also if not done already, just throw away the
+                   # result
+end
+TeeIO.tee_all
+
 Capistrano::CLI.execute
