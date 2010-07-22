@@ -1,3 +1,7 @@
+== 2.5.18.009 / Jul 22, 2010
+
+Added TeeIO class which can catch all output to $stderr/$stdout/etc, so the output can be emailed/stored
+
 == 2.5.18.008 / Jul 1, 2010
 
 Actually merged in new code
