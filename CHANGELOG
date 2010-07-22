@@ -1,3 +1,7 @@
+== 2.5.18.011 / Jul 22, 2010
+
+Fix such that taking output of TeeIO is left to the user of capistrano, not capistrano itself
+
 == 2.5.18.010 / Jul 22, 2010
 
 Small fix, so TeeIO works for capistrano as well
