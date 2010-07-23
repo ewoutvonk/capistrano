@@ -4,6 +4,7 @@ class TeeIO
   attr_accessor :pipe_io
   attr_accessor :teed_io_name
   attr_accessor :auto_close_pipe_io
+  attr_accessor :tee_on
 
   class << self
 
@@ -18,6 +19,16 @@ class TeeIO
         io = tee("$stdout", pipe_io)
         tee("$stderr", io)
       end
+    end
+    
+    def tee_all_on
+      $stderr.tee_on = true if $stderr.is_a?(TeeIO)
+      $stdout.tee_on = true if $stdout.is_a?(TeeIO)
+    end
+
+    def tee_all_off
+      $stderr.tee_on = false if $stderr.is_a?(TeeIO)
+      $stdout.tee_on = false if $stdout.is_a?(TeeIO)
     end
 
     def tee(teed_io_name, pipe_io = nil, &block)
@@ -42,11 +53,12 @@ class TeeIO
     @old_io = eval(args[0])
     @pipe_io = args[1]
     @auto_close_pipe_io = args[2]
+    @tee_on = true
   end
 
   def call_on_io(method_name, *args, &block)
     call_on_old_io(method_name, *args, &block)
-    call_on_pipe_io(method_name, *args, &block)
+    call_on_pipe_io(method_name, *args, &block) if @tee_on
   end
 
   def call_on_old_io(method_name, *args, &block)

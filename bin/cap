@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'capistrano/cli'
+require 'capistrano/cli/tee_io'
+TeeIO.tee_all
+TeeIO.tee_all_off
 Capistrano::CLI.execute
