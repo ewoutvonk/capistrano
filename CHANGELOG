@@ -1,3 +1,7 @@
+== 2.5.18.014 / Jul 27, 2010
+
+Made loading of TeeIO dependent on existence of deploy or deploy:migrations in ARGV
+
 == 2.5.18.013 / Jul 23, 2010
 
 Readded TeeIO.tee_all call to bin/cap, but added tee_all_on and tee_all_of functionality.
