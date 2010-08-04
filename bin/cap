@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'capistrano/cli'
-if ARGV.any? { |arg| [ "deploy", "deploy:migrations" ].include?(arg) }
+if ARGV.any? { |arg| [ "deploy", "deploy:migrations", "deploy:cold", "deploy:cold:migrations" ].include?(arg) }
   require 'capistrano/cli/tee_io'
   TeeIO.tee_all
   TeeIO.tee_all_off
