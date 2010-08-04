@@ -1,3 +1,7 @@
+== 2.5.18.015 / Aug 4, 2010
+
+Fix loading TeeIO
+
 == 2.5.18.014 / Jul 27, 2010
 
 Made loading of TeeIO dependent on existence of deploy or deploy:migrations in ARGV
