@@ -120,6 +120,11 @@ module Capistrano
           logger.trace "[#{channel[:host]}] #{name}" if logger && sent == 0
         end
 
+        if direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
+          from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
+          from = File.exist?(from_string) ? from_string : StringIO.new(from_string)
+        end
+
         channel = case direction
           when :up
             session.scp.upload(from, to, options, &real_callback)
@@ -177,6 +182,11 @@ module Capistrano
           opts[:properties] = (opts[:properties] || {}).merge(
             :server  => session.xserver,
             :host    => session.xserver.host)
+
+          if direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
+            from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
+            from = File.exist?(from_string) ? from_string : StringIO.new(from_string)
+          end
 
           case direction
           when :up
