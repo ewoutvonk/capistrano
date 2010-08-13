@@ -16,6 +16,13 @@ module Capistrano
       # instance.
       attr_reader :variables
 
+      def scope(scope_name, &block)
+        old_scope = @scope
+        @scope = scope_name
+        yield
+        @scope = old_scope
+      end
+
       # Set a variable to the given value.
       def set(variable, *args, &block)
         if variable.to_s !~ /^[_a-z]/
@@ -32,7 +39,14 @@ module Capistrano
 
         value = args.empty? ? block : args.first
         sym = variable.to_sym
-        protect(sym) { @variables[sym] = value }
+        protect(sym) {
+          if @scope
+            @variables[@scope] ||= {}
+            @variables[@scope][sym] = value
+          else
+            @variables[sym] = value
+          end
+        }
       end
 
       alias :[]= :set
@@ -41,14 +55,29 @@ module Capistrano
       def unset(variable)
         sym = variable.to_sym
         protect(sym) do
-          @original_procs.delete(sym)
-          @variables.delete(sym)
+          if @scope
+            if @original_procs[@scope] && @original_procs[@scope][sym]
+              @original_procs[@scope].delete(sym)
+              @original_procs.delete(@scope) if @original_procs[@scope].empty?
+            else
+              @original_procs.delete(sym)
+            end
+            if @variables[@scope] && @variables[@scope][sym]
+              @variables[@scope].delete(sym)
+              @variables.delete(@scope) if @variables[@scope].empty?
+            else
+              @variables.delete(sym)
+            end
+          else
+            @original_procs.delete(sym)
+            @variables.delete(sym)
+          end
         end
       end
 
       # Returns true if the variable has been defined, and false otherwise.
       def exists?(variable)
-        @variables.key?(variable.to_sym)
+        (@scope && @variables[@scope] && @variables[@scope].key?(variable.to_sym)) || @variables.key?(variable.to_sym)
       end
 
       # If the variable was originally a proc value, it will be reset to it's
@@ -57,7 +86,11 @@ module Capistrano
       def reset!(variable)
         sym = variable.to_sym
         protect(sym) do
-          if @original_procs.key?(sym)
+          if @scope && @original_procs[@scope] && @original_procs[@scope].key?(sym)
+            @variables[@scope] ||= {}
+            @variables[@scope][sym] = @original_procs[@scope].delete(sym)
+            true
+          elsif @original_procs.key?(sym)
             @variables[sym] = @original_procs.delete(sym)
             true
           else
@@ -76,29 +109,53 @@ module Capistrano
 
         sym = variable.to_sym
         protect(sym) do
-          if !@variables.key?(sym)
-            return args.first unless args.empty?
-            return yield(variable) if block_given?
-            raise IndexError, "`#{variable}' not found"
-          end
+          if @scope
+            if !exists?(variable)
+              return args.first unless args.empty?
+              return yield(variable) if block_given?
+              raise IndexError, "`#{variable}' not found"
+            end
 
-          if @variables[sym].respond_to?(:call)
-            @original_procs[sym] = @variables[sym]
-            @variables[sym] = @variables[sym].call
+            if @variables[@scope] && @variables[@scope].respond_to?(:call)
+              @original_procs[@scope] ||= {}
+              @variables[@scope] ||= {}
+              @original_procs[@scope][sym] = @variables[@scope][sym]
+              @variables[@scope][sym] = @variables[@scope][sym].call
+            elsif @variables[sym].respond_to?(:call)
+              @original_procs[sym] = @variables[sym]
+              @variables[sym] = @variables[sym].call
+            end
+          else
+            if !@variables.key?(sym)
+              return args.first unless args.empty?
+              return yield(variable) if block_given?
+              raise IndexError, "`#{variable}' not found"
+            end
+
+            if @variables[sym].respond_to?(:call)
+              @original_procs[sym] = @variables[sym]
+              @variables[sym] = @variables[sym].call
+            end
           end
         end
 
-        @variables[sym]
+        (@scope && @variables[@scope] && @variables[@scope][sym]) || @variables[sym]
       end
 
       def [](variable)
         fetch(variable, nil)
       end
+      
+      def variables_has_key?(key)
+        (@scope && @variables[@scope] && @variables[@scope].has_key?(key)) || @variables.has_key?(key)
+      end
 
       def initialize_with_variables(*args) #:nodoc:
         initialize_without_variables(*args)
+        @scope = nil
         @variables = {}
         @original_procs = {}
+        @scoped_variable_locks = {}
         @variable_locks = Hash.new { |h,k| h[k] = Mutex.new }
 
         set :ssh_options, {}
@@ -107,16 +164,21 @@ module Capistrano
       private :initialize_with_variables
 
       def protect(variable)
-        @variable_locks[variable.to_sym].synchronize { yield }
+        if @scope && @scoped_variable_locks[@scope] && @scoped_variable_locks[@scope][variable.to_sym]
+          @scoped_variable_locks[@scope] ||= Hash.new { |h,k| h[k] = Mutex.new }
+          @scoped_variable_locks[@scope][variable.to_sym].synchronize { yield }
+        else
+          @variable_locks[variable.to_sym].synchronize { yield }
+        end
       end
       private :protect
 
       def respond_to_with_variables?(sym, include_priv=false) #:nodoc:
-        @variables.has_key?(sym) || respond_to_without_variables?(sym, include_priv)
+        variables_has_key?(sym) || respond_to_without_variables?(sym, include_priv)
       end
 
       def method_missing_with_variables(sym, *args, &block) #:nodoc:
-        if args.length == 0 && block.nil? && @variables.has_key?(sym)
+        if args.length == 0 && block.nil? && variables_has_key?(sym)
           self[sym]
         else
           method_missing_without_variables(sym, *args, &block)

@@ -28,6 +28,7 @@ module Capistrano
       @from      = from
       @to        = to
       @sessions  = sessions
+      proc       = options.delete(:proc)
       @options   = options
       @callback  = block
 
@@ -36,7 +37,7 @@ module Capistrano
 
       @session_map = {}
 
-      prepare_transfers
+      prepare_transfers(proc)
     end
 
     def process!
@@ -97,7 +98,7 @@ module Capistrano
         @session_map
       end
 
-      def prepare_transfers
+      def prepare_transfers(proc)
         logger.info "#{transport} #{operation} #{from} -> #{to}" if logger
 
         @transfers = sessions.map do |session|
@@ -106,21 +107,23 @@ module Capistrano
 
           session_map[session] = case transport
             when :sftp
-              prepare_sftp_transfer(session_from, session_to, session)
+              prepare_sftp_transfer(session_from, session_to, session, proc)
             when :scp
-              prepare_scp_transfer(session_from, session_to, session)
+              prepare_scp_transfer(session_from, session_to, session, proc)
             else
               raise ArgumentError, "unsupported transport type: #{transport.inspect}"
             end
         end
       end
 
-      def prepare_scp_transfer(from, to, session)
+      def prepare_scp_transfer(from, to, session, proc)
         real_callback = callback || Proc.new do |channel, name, sent, total|
           logger.trace "[#{channel[:host]}] #{name}" if logger && sent == 0
         end
 
-        if direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
+        if proc.is_a?(Proc)
+          from = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
+        elsif direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
           from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
           from = File.exist?(from_string) ? from_string : StringIO.new(from_string)
         end
@@ -166,7 +169,7 @@ module Capistrano
         end
       end
 
-      def prepare_sftp_transfer(from, to, session)
+      def prepare_sftp_transfer(from, to, session, proc)
         SFTPTransferWrapper.new(session) do |sftp|
           real_callback = Proc.new do |event, op, *args|
             if callback
@@ -183,7 +186,9 @@ module Capistrano
             :server  => session.xserver,
             :host    => session.xserver.host)
 
-          if direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
+          if proc.is_a?(Proc)
+            from = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
+          elsif direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
             from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
             from = File.exist?(from_string) ? from_string : StringIO.new(from_string)
           end

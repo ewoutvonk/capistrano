@@ -63,10 +63,16 @@ module Capistrano
       # the roles as the remaining parameters:
       #
       #   server "master.example.com", :web, :app
-      def server(host, *roles)
+      def server(host, *roles, &block)
         options = roles.last.is_a?(Hash) ? roles.pop : {}
+        old_scope = @scope
+        @scope = host if block_given?
         raise ArgumentError, "you must associate a server with at least one role" if roles.empty?
         roles.each { |name| role(name, host, options) }
+        if block_given?
+          yield
+          @scope = old_scope
+        end
       end
     end
   end
