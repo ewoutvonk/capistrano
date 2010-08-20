@@ -122,10 +122,11 @@ module Capistrano
         end
 
         if proc.is_a?(Proc)
-          from = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
+          from_string = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
+          from = File.exist?(from_string) || from_string.is_a?(StringIO) ? from_string : StringIO.new(from_string.to_s)
         elsif direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
           from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
-          from = File.exist?(from_string) ? from_string : StringIO.new(from_string)
+          from = File.exist?(from_string) || from_string.is_a?(StringIO) ? from_string : StringIO.new(from_string.to_s)
         end
 
         channel = case direction
@@ -187,10 +188,11 @@ module Capistrano
             :host    => session.xserver.host)
 
           if proc.is_a?(Proc)
-            from = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
+            from_string = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
+            from = File.exist?(from_string) || from_string.is_a?(StringIO) ? from_string : StringIO.new(from_string.to_s)
           elsif direction == :up && from.is_a?(StringIO) && from.string =~ /%\{host\}/
             from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
-            from = File.exist?(from_string) ? from_string : StringIO.new(from_string)
+            from = File.exist?(from_string) || from_string.is_a?(StringIO) ? from_string : StringIO.new(from_string.to_s)
           end
 
           case direction
