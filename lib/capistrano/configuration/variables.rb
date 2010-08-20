@@ -19,8 +19,9 @@ module Capistrano
       def scope(scope_name, &block)
         old_scope = @scope
         @scope = scope_name
-        yield
+        result = yield
         @scope = old_scope
+        result
       end
 
       # Set a variable to the given value.
