@@ -190,7 +190,7 @@ module Capistrano
           if proc.is_a?(Proc)
             from_string = proc.call(from.is_a?(StringIO) ? from.string : from, session.xserver.host)
             from = File.exist?(from_string) || from_string.is_a?(StringIO) ? from_string : StringIO.new(from_string.to_s)
-          elsif direction == :up && from.is_a?(StringIO) && (from.string.respond_to(:force_encoding) ? from.string.force_encoding('binary') =~ /%\{host\}/ : from.string =~ /%\{host\}/)
+          elsif direction == :up && from.is_a?(StringIO) && (from.string.respond_to?(:force_encoding) ? from.string.force_encoding('binary') =~ /%\{host\}/ : from.string =~ /%\{host\}/)
             from_string = from.string.gsub(/%\{host\}/, session.xserver.host)
             from = File.exist?(from_string) || from_string.is_a?(StringIO) ? from_string : StringIO.new(from_string.to_s)
           end
