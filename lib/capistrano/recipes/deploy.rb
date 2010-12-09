@@ -61,6 +61,8 @@ _cset(:previous_revision) { capture("cat #{previous_release}/REVISION").chomp }
 
 _cset(:run_method)        { fetch(:use_sudo, true) ? :sudo : :run }
 
+_cset :disable_capistrano_migrations, false
+
 # some tasks, like symlink, need to always point at the latest release, but
 # they can also (occassionally) be called standalone. In the standalone case,
 # the timestamped release_path will be inaccurate, since the directory won't
@@ -375,19 +377,21 @@ namespace :deploy do
       set :migrate_target, :latest
   DESC
   task :migrate, :roles => :db, :only => { :primary => true } do
-    rake = fetch(:rake, "rake")
-    rails_env = fetch(:rails_env, "production")
-    migrate_env = fetch(:migrate_env, "")
-    migrate_target = fetch(:migrate_target, :latest)
+    unless disable_capistrano_migrations
+      rake = fetch(:rake, "rake")
+      rails_env = fetch(:rails_env, "production")
+      migrate_env = fetch(:migrate_env, "")
+      migrate_target = fetch(:migrate_target, :latest)
 
-    directory = case migrate_target.to_sym
-      when :current then current_path
-      when :latest  then current_release
-      else raise ArgumentError, "unknown migration target #{migrate_target.inspect}"
-      end
+      directory = case migrate_target.to_sym
+        when :current then current_path
+        when :latest  then current_release
+        else raise ArgumentError, "unknown migration target #{migrate_target.inspect}"
+        end
 
-    puts "#{migrate_target} => #{directory}"
-    run "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{migrate_env} db:migrate"
+      puts "#{migrate_target} => #{directory}"
+      run "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{migrate_env} db:migrate"
+    end
   end
 
   desc <<-DESC
