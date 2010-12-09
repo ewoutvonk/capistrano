@@ -391,6 +391,8 @@ namespace :deploy do
 
       puts "#{migrate_target} => #{directory}"
       run "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{migrate_env} db:migrate"
+    else
+      puts "skipping capistrano migrations.."
     end
   end
 
