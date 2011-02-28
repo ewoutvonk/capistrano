@@ -68,7 +68,7 @@ module Capistrano
         end
       end
 
-      logger.debug "#{transport} #{operation} complete" if logger
+      logger.debug "#{transport} #{operation} complete" if logger && !silent
       self
     end
 
@@ -103,7 +103,7 @@ module Capistrano
       end
 
       def prepare_transfers(proc)
-        logger.info "#{transport} #{operation} #{from} -> #{to}" if logger
+        logger.info "#{transport} #{operation} #{from} -> #{to}" if logger && !silent
 
         @transfers = sessions.map do |session|
           session_from = normalize(from, session)
@@ -122,7 +122,7 @@ module Capistrano
 
       def prepare_scp_transfer(from, to, session, proc)
         real_callback = callback || Proc.new do |channel, name, sent, total|
-          logger.trace "[#{channel[:host]}] #{name}" if logger && sent == 0
+          logger.trace "[#{channel[:host]}] #{name}" if !silent && logger && sent == 0
         end
 
         if proc.is_a?(Proc)
