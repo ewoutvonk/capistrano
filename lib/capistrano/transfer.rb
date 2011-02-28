@@ -22,6 +22,7 @@ module Capistrano
 
     attr_reader :logger
     attr_reader :transfers
+    attr_reader :silent
 
     def initialize(direction, from, to, sessions, options={}, &block)
       @direction = direction
@@ -33,6 +34,7 @@ module Capistrano
 
       @transport = options.fetch(:via, :sftp)
       @logger    = options.delete(:logger)
+      @silent    = options.delete(:silent)
 
       @session_map = {}
 
@@ -52,15 +54,17 @@ module Capistrano
         end
       end
 
-      failed = transfers.select { |txfr| txfr[:failed] }
-      if failed.any?
-        hosts = failed.map { |txfr| txfr[:server] }
-        errors = failed.map { |txfr| "#{txfr[:error]} (#{txfr[:error].message})" }.uniq.join(", ")
-        error = TransferError.new("#{operation} via #{transport} failed on #{hosts.join(',')}: #{errors}")
-        error.hosts = hosts
+      unless silent
+        failed = transfers.select { |txfr| txfr[:failed] }
+        if failed.any?
+          hosts = failed.map { |txfr| txfr[:server] }
+          errors = failed.map { |txfr| "#{txfr[:error]} (#{txfr[:error].message})" }.uniq.join(", ")
+          error = TransferError.new("#{operation} via #{transport} failed on #{hosts.join(',')}: #{errors}")
+          error.hosts = hosts
 
-        logger.important(error.message) if logger
-        raise error
+          logger.important(error.message) if logger
+          raise error
+        end
       end
 
       logger.debug "#{transport} #{operation} complete" if logger
